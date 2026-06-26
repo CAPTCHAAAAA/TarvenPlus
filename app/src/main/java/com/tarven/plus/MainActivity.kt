@@ -11,9 +11,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.PixelCopy
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.PixelCopy
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
@@ -306,33 +306,10 @@ class MainActivity : Activity() {
             }
             CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
 
-            // ╔══════════════════════════════════════════════════════════╗
-            // ║  TarvenThemeBridge — JS→Kotlin color push. DO NOT RENAME.║
-            // ║  Route B (JS sentinel) pushes via pushThemeColor().      ║
-            // ║  If color is null/transparent → Route A (PixelCopy).     ║
-            // ╚══════════════════════════════════════════════════════════╝
-            addJavascriptInterface(object : Any() {
-                @android.webkit.JavascriptInterface
-                fun pushThemeColor(cssColor: String) {
-                    runOnUiThread {
-                        val c = parseThemeColor(cssColor)
-                        // If JS failed (empty/transparent), fall back to PixelCopy hardware sample
-                        if (c != null) {
-                            floatingControl.setScrimColor(c)
-                        } else {
-                            samplePixelColor { hwColor ->
-                                if (hwColor != null) floatingControl.setScrimColor(hwColor)
-                            }
-                        }
-                    }
-                }
-            }, "TarvenThemeBridge")
-
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(v: WebView?, url: String?) {
                     super.onPageFinished(v, url)
                     android.util.Log.i(TAG, "Page loaded: $url")
-                    injectThemeSentinel()
                     installChameleonProbes()
                 }
             }
@@ -664,15 +641,13 @@ class MainActivity : Activity() {
     }
 
     // ╔══════════════════════════════════════════════════════════════════╗
-    // ║  DO NOT CHANGE — Adaptive color fallback (Route A: 1px Chameleon║
-    // ║  Probe). Samples the pixel 2px directly below the info bar from  ║
-    // ║  the GPU framebuffer. API 26+ only.                              ║
+    // ║  DO NOT CHANGE — Adaptive color extraction (Route A: PixelCopy). ║
+    // ║  Reads 1px from GPU framebuffer 1px below WebView top edge.      ║
     // ╚══════════════════════════════════════════════════════════════════╝
     private fun samplePixelColor(onResult: (Int?) -> Unit) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) { onResult(null); return }
         val loc = IntArray(2)
         webView.getLocationInWindow(loc)
-        // Sample 1px below WebView top edge — pure WebView content, no mixing
         val sampleX = loc[0] + webView.width / 2
         val sampleY = loc[1] + 1
         val srcRect = Rect(sampleX, sampleY, sampleX + 1, sampleY + 1)
@@ -693,112 +668,22 @@ class MainActivity : Activity() {
         }, handler)
     }
 
-    /** SPA-safe delayed color probe: fires 1s after page load, then on every touch-up. */
+    /** Delayed probe: 1s after page load, then on every touch-up. */
     private fun installChameleonProbes() {
-        // 1. Delayed initial probe (1000ms — SPA hydration guarantee)
         handler.postDelayed({
             samplePixelColor { hwColor ->
                 if (hwColor != null) floatingControl.setScrimColor(hwColor)
             }
         }, 1000)
-        // 2. Touch-up probe — catches theme switches in SPAs (no page reload)
         webView.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_UP) {
                 handler.postDelayed({
                     samplePixelColor { hwColor ->
                         if (hwColor != null) floatingControl.setScrimColor(hwColor)
                     }
-                }, 300) // 300ms debounce for theme switch animation
+                }, 300)
             }
-            false // don't consume — let WebView handle the touch
-        }
-    }
-
-    // ╔══════════════════════════════════════════════════════════════════╗
-    // ║  DO NOT CHANGE — Adaptive color extraction (Route B: Sniper JS). ║
-    // ║  y=250: bypasses transparent top nav, hits solid chat bg.        ║
-    // ║  alpha>=0.95: penetrates translucent overlays to real colour.    ║
-    // ║  #AARRGGBB: safe format for Android Color.parseColor.            ║
-    // ╚══════════════════════════════════════════════════════════════════╝
-    private fun injectThemeSentinel() {
-        webView.evaluateJavascript("""
-            (function(){
-                if (window.__tarvenSentinel) return;
-                window.__tarvenSentinel = true;
-
-                function toAndroidHex(r, g, b, a) {
-                    var h = '#' + (a === undefined || a === 1 ? 'FF' :
-                        ('0' + Math.round(a * 255).toString(16)).slice(-2)) +
-                        ('0' + r.toString(16)).slice(-2) +
-                        ('0' + g.toString(16)).slice(-2) +
-                        ('0' + b.toString(16)).slice(-2);
-                    return h.toUpperCase();
-                }
-
-                function getVisualTopColor() {
-                    var x = window.innerWidth / 2;
-                    var y = 250;  // below any transparent header, into solid chat area
-                    var el = document.elementFromPoint(x, y);
-                    while (el && el !== document) {
-                        try {
-                            var bg = window.getComputedStyle(el).backgroundColor;
-                            if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') {
-                                var m = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-                                if (m) {
-                                    var a = m[4] === undefined ? 1 : parseFloat(m[4]);
-                                    if (a >= 0.95) { // only truly solid backgrounds
-                                        return toAndroidHex(parseInt(m[1]), parseInt(m[2]), parseInt(m[3]), a);
-                                    }
-                                }
-                            }
-                        } catch(e) {}
-                        el = el.parentElement;
-                    }
-                    var root = window.getComputedStyle(document.documentElement);
-                    var fallback = root.getPropertyValue('--body-background-color') ||
-                                   root.getPropertyValue('--SmartThemeBodyColor') || '';
-                    if (fallback) {
-                        var fm = fallback.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-                        if (fm) {
-                            var fa = fm[4] === undefined ? 1 : parseFloat(fm[4]);
-                            return toAndroidHex(parseInt(fm[1]), parseInt(fm[2]), parseInt(fm[3]), fa);
-                        }
-                    }
-                    return '';
-                }
-
-                function notifyNative() {
-                    var c = getVisualTopColor();
-                    if (c && window.TarvenThemeBridge) {
-                        window.TarvenThemeBridge.pushThemeColor(c);
-                    }
-                }
-
-                new MutationObserver(function() { notifyNative(); })
-                    .observe(document.documentElement, {
-                        attributes: true, subtree: true,
-                        attributeFilter: ['style', 'class']
-                    });
-
-                setTimeout(notifyNative, 600);
-            })();
-        """.trimIndent(), null)
-    }
-
-    // ╔══════════════════════════════════════════════════════════════════╗
-    // ║  CSS color parser: handles #hex, rgb(), rgba().                 ║
-    // ║  Returns null for transparent/empty — caller falls back to      ║
-    // ║  PixelCopy (Route A) or brand black.                            ║
-    // ╚══════════════════════════════════════════════════════════════════╝
-    private fun parseThemeColor(raw: String?): Int? {
-        val s = raw?.trim()?.trim('"')?.trim('\'') ?: return null
-        if (s.isBlank() || s == "rgba(0, 0, 0, 0)" || s == "transparent") return null
-        return try {
-            android.graphics.Color.parseColor(s)
-        } catch (_: Exception) {
-            val nums = Regex("\\d+").findAll(s).map { it.value.toIntOrNull() ?: 0 }.toList()
-            if (nums.size >= 3) android.graphics.Color.rgb(nums[0], nums[1], nums[2])
-            else null
+            false
         }
     }
 
