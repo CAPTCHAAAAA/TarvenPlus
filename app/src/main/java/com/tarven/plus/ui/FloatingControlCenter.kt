@@ -22,6 +22,8 @@ class FloatingControlCenter(private val activity: Activity) {
 
     private var root: FrameLayout? = null
     private var barBand = 0
+    private var glossAnim: ValueAnimator? = null
+    private var colorAnim: ValueAnimator? = null
 
     fun attach(root: FrameLayout, statusBarHeight: Int) {
         this.root = root
@@ -79,7 +81,8 @@ class FloatingControlCenter(private val activity: Activity) {
             val fromR = Color.red(currentBody); val fromG = Color.green(currentBody); val fromB = Color.blue(currentBody)
             val toR = Color.red(baseColor); val toG = Color.green(baseColor); val toB = Color.blue(baseColor)
 
-            ValueAnimator.ofFloat(0f, 1f).apply {
+            colorAnim?.cancel()
+            colorAnim = ValueAnimator.ofFloat(0f, 1f).apply {
                 duration = 2400
                 interpolator = android.view.animation.DecelerateInterpolator(1.8f)
                 addUpdateListener { va ->
@@ -98,13 +101,14 @@ class FloatingControlCenter(private val activity: Activity) {
                     )
                 }
                 start()
-            }
+            }.also { colorAnim = it }
         }
     }
 
     fun sweepGlossOver() {
         if (!::gloss.isInitialized) return
-        ValueAnimator.ofFloat(0f, 1f).apply {
+        glossAnim?.cancel()
+        glossAnim = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = 2400
             interpolator = android.view.animation.DecelerateInterpolator(2f)
             addUpdateListener { va ->
