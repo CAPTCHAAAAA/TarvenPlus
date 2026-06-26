@@ -37,7 +37,6 @@ import com.tarven.plus.runtime.RuntimePaths
 import com.tarven.plus.runtime.RuntimeFileUtils
 import com.tarven.plus.runtime.TarvenProcessRunner
 import com.tarven.plus.ui.FloatingControlCenter
-import com.tarven.plus.ui.SplashOverlay
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -69,7 +68,6 @@ class MainActivity : Activity() {
     private lateinit var startButton: TextView
     private lateinit var fixButton: TextView
 
-    private lateinit var splash: SplashOverlay
     private lateinit var floatingControl: FloatingControlCenter
 
     // ---- State ----
@@ -335,11 +333,6 @@ class MainActivity : Activity() {
 
         setContentView(root)
 
-        // ---- Splash (minimal: dark + LED + progress) ----
-        splash = SplashOverlay(this)
-        splash.attachTo(root)
-        splash.setLedColor(SplashOverlay.LED_CHECKING)
-
         // ---- Floating control center ----
         floatingControl = FloatingControlCenter(this)
         floatingControl.setCallback(object : FloatingControlCenter.Callback {
@@ -359,7 +352,7 @@ class MainActivity : Activity() {
         if (wasWebViewVisible && wasServerReady) {
             serverReady = true
             webView.loadUrl(TAVERN_URL)
-            splash.fadeOut {
+            handler.post {
                 switchToWebView(false)
                 homeScroll.visibility = View.GONE
                 enterImmersive()
@@ -372,7 +365,7 @@ class MainActivity : Activity() {
             startButton.alpha = 1f
         } else if (wasServerReady) {
             serverReady = true
-            splash.fadeOut {
+            handler.post {
                 homeScroll.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f)
                     .setDuration(260).setInterpolator(OvershootInterpolator(0.9f)).start()
             }
@@ -404,8 +397,8 @@ class MainActivity : Activity() {
             if (!hasServer) {
                 setStatus("Provisioning...")
                 setProgress(0)
-                splash.setStatus("Provisioning...")
-                splash.setLedColor(SplashOverlay.LED_PREP)
+                setStatus("Provisioning...")
+                setServerDot(FloatingControlCenter.LED_PREP)
 
                 // Extract native libs from APK
                 extractNativeLibs(paths)
@@ -416,26 +409,26 @@ class MainActivity : Activity() {
                 updateProgress(100)
                 if (!ok) {
                     setStatus("Download failed")
-                    splash.setStatus("Download failed")
-                    splash.setLedColor(SplashOverlay.LED_FAILED)
+                    setStatus("Download failed")
+                    setServerDot(FloatingControlCenter.LED_FAILED)
                     return@Thread
                 }
-                splash.setLedColor(SplashOverlay.LED_OK)
+                setServerDot(FloatingControlCenter.LED_OK)
                 setStatusDot(GREEN)
             } else {
-                splash.setLedColor(SplashOverlay.LED_OK)
+                setServerDot(FloatingControlCenter.LED_OK)
                 setStatusDot(GREEN)
             }
 
             // Start server
             setStatus("Starting server...")
-            splash.setStatus("Starting server...")
-            splash.setLedColor(SplashOverlay.LED_CHECKING)
+            setStatus("Starting server...")
+            setServerDot(FloatingControlCenter.LED_CHECKING)
             val started = startServer(paths)
             if (!started) {
                 setStatus("Start failed")
-                splash.setStatus("Start failed")
-                splash.setLedColor(SplashOverlay.LED_FAILED)
+                setStatus("Start failed")
+                setServerDot(FloatingControlCenter.LED_FAILED)
                 return@Thread
             }
 
@@ -744,7 +737,7 @@ class MainActivity : Activity() {
         if (!downloadFile(SERVER_SOURCE_URL, destZip)) return false
 
         setStatus("Extracting server...")
-        splash.setStatus("Extracting server...")
+        setStatus("Extracting server...")
         try {
             destZip.inputStream().use { input ->
                 RuntimeFileUtils.unzipStream(input, serverDir)
@@ -754,7 +747,7 @@ class MainActivity : Activity() {
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Extract failed", e)
             setStatus("Extract failed")
-            splash.setStatus("Extract failed")
+            setStatus("Extract failed")
             return false
         }
     }
@@ -784,8 +777,8 @@ class MainActivity : Activity() {
                     post { progressBar.progress = 15 + (pct * 80 / 100) }
                     val pct2 = pct
                     setStatus("Downloading... $pct2%")
-                    splash.setProgress(15 + (pct2 * 80 / 100))
-                    splash.setStatus("Downloading... $pct2%")
+                    updateProgress(15 + (pct2 * 80 / 100))
+                    setStatus("Downloading... $pct2%")
                 }
             }
             output.close()
@@ -859,11 +852,11 @@ class MainActivity : Activity() {
         while (a < 120) {
             if (tryConnect(TAVERN_URL)) {
                 serverReady = true
-                splash.setLedColor(SplashOverlay.LED_OK)
+                setServerDot(FloatingControlCenter.LED_OK)
                 updateHomeReady()
                 // Fade splash → reveal home with entrance animation
                 post {
-                    splash.fadeOut {
+                    handler.post {
                         homeScroll.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f)
                             .setDuration(260).setInterpolator(OvershootInterpolator(0.9f)).start()
                     }
@@ -874,8 +867,8 @@ class MainActivity : Activity() {
             try { Thread.sleep(1000) } catch (_: Exception) { break }
         }
         setStatus("No response")
-        splash.setStatus("No response")
-        splash.setLedColor(SplashOverlay.LED_FAILED)
+        setStatus("No response")
+        setServerDot(FloatingControlCenter.LED_FAILED)
     }
 
     private fun tryConnect(url: String) = try {
@@ -1043,6 +1036,8 @@ class MainActivity : Activity() {
             if (webView.canGoBack()) webView.goBack() else exitTavern()
         } else super.onBackPressed()
     }
+
+    private fun setServerDot(color: Int) { setDot(serverDot, color) }
 
     override fun onDestroy() {
         if (serverReady) runner.stop()
