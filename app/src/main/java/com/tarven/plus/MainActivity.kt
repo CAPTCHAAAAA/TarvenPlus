@@ -335,11 +335,6 @@ class MainActivity : Activity() {
 
         // ---- Floating control center ----
         floatingControl = FloatingControlCenter(this)
-        floatingControl.setCallback(object : FloatingControlCenter.Callback {
-            override fun onRefresh() { webView.reload() }
-            override fun onSettings() { /* TODO: open settings */ }
-            override fun onExit() { exitTavern() }
-        })
 
         // Codex++ entrance: fade + micro-scale
         homeScroll.alpha = 0f
@@ -357,7 +352,6 @@ class MainActivity : Activity() {
                 homeScroll.visibility = View.GONE
                 enterImmersive()
                 floatingControl.attach(root, statusBarFixedPx)
-                floatingControl.setStatus(FloatingControlCenter.LED_OK)
             }
             setStatus("Ready")
             setStatusDot(GREEN)
@@ -398,7 +392,6 @@ class MainActivity : Activity() {
                 setStatus("Provisioning...")
                 setProgress(0)
                 setStatus("Provisioning...")
-                setServerDot(FloatingControlCenter.LED_PREP)
 
                 // Extract native libs from APK
                 extractNativeLibs(paths)
@@ -410,25 +403,20 @@ class MainActivity : Activity() {
                 if (!ok) {
                     setStatus("Download failed")
                     setStatus("Download failed")
-                    setServerDot(FloatingControlCenter.LED_FAILED)
                     return@Thread
                 }
-                setServerDot(FloatingControlCenter.LED_OK)
                 setStatusDot(GREEN)
             } else {
-                setServerDot(FloatingControlCenter.LED_OK)
                 setStatusDot(GREEN)
             }
 
             // Start server
             setStatus("Starting server...")
             setStatus("Starting server...")
-            setServerDot(FloatingControlCenter.LED_CHECKING)
             val started = startServer(paths)
             if (!started) {
                 setStatus("Start failed")
                 setStatus("Start failed")
-                setServerDot(FloatingControlCenter.LED_FAILED)
                 return@Thread
             }
 
@@ -517,7 +505,6 @@ class MainActivity : Activity() {
         excludeSystemGestures()
         handler.postDelayed({
             floatingControl.attach(root, h)
-            floatingControl.setStatus(FloatingControlCenter.LED_OK, "Tavern")
         }, 500)
     }
 
@@ -852,7 +839,6 @@ class MainActivity : Activity() {
         while (a < 120) {
             if (tryConnect(TAVERN_URL)) {
                 serverReady = true
-                setServerDot(FloatingControlCenter.LED_OK)
                 updateHomeReady()
                 // Fade splash → reveal home with entrance animation
                 post {
@@ -868,7 +854,6 @@ class MainActivity : Activity() {
         }
         setStatus("No response")
         setStatus("No response")
-        setServerDot(FloatingControlCenter.LED_FAILED)
     }
 
     private fun tryConnect(url: String) = try {
@@ -1037,7 +1022,6 @@ class MainActivity : Activity() {
         } else super.onBackPressed()
     }
 
-    private fun setServerDot(color: Int) { setDot(serverDot, color) }
 
     override fun onDestroy() {
         if (serverReady) runner.stop()
