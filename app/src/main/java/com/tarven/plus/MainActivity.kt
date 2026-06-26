@@ -50,13 +50,24 @@ class MainActivity : Activity() {
 
     // ---- Views ----
     private lateinit var root: FrameLayout
+    private lateinit var homeScroll: android.widget.ScrollView
     private lateinit var homeScreen: LinearLayout
     private lateinit var webViewScreen: FrameLayout
     private lateinit var webView: WebView
+
+    // Dashboard card indicators
+    private lateinit var nodeDot: View
+    private lateinit var nodeLabel: TextView
+    private lateinit var libsDot: View
+    private lateinit var libsLabel: TextView
+    private lateinit var serverDot: View
+    private lateinit var serverLabel: TextView
+    private lateinit var versionLabel: TextView
+
     private lateinit var statusText: TextView
-    private lateinit var statusDot: View
     private lateinit var progressBar: ProgressBar
     private lateinit var startButton: TextView
+    private lateinit var fixButton: TextView
 
     private lateinit var splash: SplashOverlay
     private lateinit var floatingControl: FloatingControlCenter
@@ -178,73 +189,102 @@ class MainActivity : Activity() {
             setPadding(0, 0, 0, dp(36))
         })
 
-        // Status card (glass-style)
-        val statusCard = card()
-        val statusCardLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(16), dp(18), dp(16))
-        }
+        // ═══════════════════════════════════════════
+        // DASHBOARD CARDS
+        // ═══════════════════════════════════════════
 
-        // Status row: dot + text
-        val statusRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+        // Node.js Runtime card
+        val nodeCard = infoCard(
+            "Node.js Runtime", "Checking...",
+            "libtarven-node.so", PINK_DIM
+        ).also { (card, dot, label) ->
+            nodeDot = dot; nodeLabel = label; homeScreen.addView(card)
         }
-        statusDot = View(this).apply {
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setSize(dp(9), dp(9))
-                setColor(PINK_DIM)
-            }
-            val lp = LinearLayout.LayoutParams(dp(9), dp(9))
-            lp.rightMargin = dp(10)
-            layoutParams = lp
-        }
-        statusRow.addView(statusDot)
+        homeScreen.addView(spacer(dp(10)))
 
-        statusText = textView("Preparing...", dp(14), TEXT_MUTED, false).apply {
-            gravity = Gravity.START or Gravity.CENTER_VERTICAL
+        // Bionic Libraries card
+        val libsCard = infoCard(
+            "Bionic Libraries", "Checking...",
+            "usr/lib/", PINK_DIM
+        ).also { (card, dot, label) ->
+            libsDot = dot; libsLabel = label; homeScreen.addView(card)
         }
-        statusRow.addView(statusText)
-        statusCardLayout.addView(statusRow)
+        homeScreen.addView(spacer(dp(10)))
+
+        // SillyTavern Server card
+        val serverCard = infoCard(
+            "SillyTavern Server", "Not started",
+            "127.0.0.1:8000", PINK_DIM
+        ).also { (card, dot, label) ->
+            serverDot = dot; serverLabel = label; homeScreen.addView(card)
+        }
+        homeScreen.addView(spacer(dp(10)))
+
+        // Version info card
+        versionLabel = textView("Tarven++ v0.5  |  Node v24.17.0", dp(11), TEXT_DIM, false).apply {
+            gravity = Gravity.START
+            setPadding(dp(18), dp(10), dp(18), dp(4))
+        }
+        val verCard = card().apply {
+            addView(versionLabel)
+        }
+        homeScreen.addView(verCard)
+        homeScreen.addView(spacer(dp(16)))
 
         // Progress bar
         progressBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
-            progressDrawable = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(3).toFloat()
-                setColor(PINK)
-            }.let { it }
+            progressTintList = android.content.res.ColorStateList.valueOf(PINK)
+            progressBackgroundTintList = android.content.res.ColorStateList.valueOf(Color.argb(18, 255, 255, 255))
             isIndeterminate = false
             max = 100
             progress = 0
-            setPadding(0, dp(12), 0, dp(8))
+            val lp = LinearLayout.LayoutParams(MATCH, dp(3))
+            lp.setMargins(dp(18), 0, dp(18), dp(8))
+            layoutParams = lp
         }
-        // Override progress color
-        progressBar.progressTintList = android.content.res.ColorStateList.valueOf(PINK)
-        progressBar.progressBackgroundTintList = android.content.res.ColorStateList.valueOf(Color.argb(18, 255, 255, 255))
-        statusCardLayout.addView(progressBar)
+        homeScreen.addView(progressBar)
 
-        statusCard.addView(statusCardLayout)
-        homeScreen.addView(statusCard)
+        statusText = textView("Ready", dp(12), TEXT_MUTED, false).apply {
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, dp(6))
+        }
+        homeScreen.addView(statusText)
 
-        // Spacer
-        homeScreen.addView(spacer(dp(28)))
+        // Fix & Enter buttons row
+        val btnRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(dp(12), 0, dp(12), 0)
+        }
+        fixButton = pillButton("DIAGNOSE & FIX", GOLD, TEXT).apply {
+            setOnClickListener { runDiagnostics() }
+            val lp = LinearLayout.LayoutParams(0, WRAP, 1f)
+            lp.rightMargin = dp(8)
+            layoutParams = lp
+        }
+        btnRow.addView(fixButton)
 
-        // ENTER TAVERN button
-        startButton = pillButton("ENTER TAVERN", PINK, TEXT).apply {
+        startButton = pillButton("ENTER", PINK, TEXT).apply {
             isEnabled = false
             alpha = 0.45f
             setOnClickListener { enterTavern() }
+            val lp = LinearLayout.LayoutParams(0, WRAP, 1f)
+            lp.leftMargin = dp(8)
+            layoutParams = lp
         }
-        homeScreen.addView(startButton)
+        btnRow.addView(startButton)
+        homeScreen.addView(btnRow)
 
         // Version
-        homeScreen.addView(textView("v0.4", dp(11), TEXT_DIM, false).apply {
-            setPadding(0, dp(16), 0, 0)
+        homeScreen.addView(textView("v0.5-dev", dp(11), TEXT_DIM, false).apply {
+            setPadding(0, dp(12), 0, 0)
         })
 
-        root.addView(homeScreen, FrameLayout.LayoutParams(MATCH, MATCH))
+        homeScroll = android.widget.ScrollView(this).apply {
+            addView(homeScreen, FrameLayout.LayoutParams(MATCH, WRAP))
+            setVerticalScrollBarEnabled(false)
+        }
+        root.addView(homeScroll, FrameLayout.LayoutParams(MATCH, MATCH))
 
         // ============================================
         // WEBVIEW SCREEN
@@ -332,9 +372,10 @@ class MainActivity : Activity() {
         })
 
         // Codex++ entrance: fade + micro-scale
-        homeScreen.alpha = 0f
-        homeScreen.translationY = dp(10).toFloat()
-        homeScreen.scaleX = 0.992f
+        homeScroll.alpha = 0f
+        homeScroll.translationY = dp(10).toFloat()
+        homeScroll.scaleX = 0.992f
+        homeScroll.scaleY = 0.992f
         homeScreen.scaleY = 0.992f
 
         // Restore or init
@@ -343,7 +384,7 @@ class MainActivity : Activity() {
             webView.loadUrl(TAVERN_URL)
             splash.fadeOut {
                 switchToWebView(false)
-                homeScreen.visibility = View.GONE
+                homeScroll.visibility = View.GONE
                 enterImmersive()
                 floatingControl.attach(root, statusBarFixedPx)
                 floatingControl.setStatus(FloatingControlCenter.LED_OK)
@@ -355,7 +396,7 @@ class MainActivity : Activity() {
         } else if (wasServerReady) {
             serverReady = true
             splash.fadeOut {
-                homeScreen.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f)
+                homeScroll.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f)
                     .setDuration(260).setInterpolator(OvershootInterpolator(0.9f)).start()
             }
             updateHomeReady()
@@ -448,6 +489,49 @@ class MainActivity : Activity() {
      * ║  combo is the only stable approach found for HyperOS.           ║
      * ╚══════════════════════════════════════════════════════════════════╝
      */
+    private fun runDiagnostics() {
+        setStatus("Running diagnostics...")
+        progressBar.progress = 0
+        Thread {
+            val paths = RuntimePaths.from(this)
+            // 1. Node binary
+            val nodeOk = paths.nodeBin.exists()
+            post { setDot(nodeDot, if (nodeOk) GREEN else 0xFFEF4444.toInt())
+                nodeLabel.text = if (nodeOk) "Node v24.17.0 ready" else "Binary missing!" }
+            updateProgress(30)
+            // 2. Bionic libs
+            val libCount = paths.usrLibDir.listFiles()?.size ?: 0
+            post { val ok = libCount > 50; setDot(libsDot, if (ok) GREEN else 0xFFEF4444.toInt())
+                libsLabel.text = if (ok) "$libCount libs loaded" else "$libCount libs — need rootfs" }
+            updateProgress(60)
+            // 3. Server source
+            val serverJs = File(paths.serverDir, "server.js")
+            val serverOk = serverJs.exists() && File(paths.serverDir, "node_modules").isDirectory
+            post { setDot(serverDot, if (serverOk) GREEN else 0xFFEF4444.toInt())
+                serverLabel.text = if (serverOk) "Server source ready" else "Server source missing!" }
+            updateProgress(80)
+            // 4. Fix if needed
+            if (!nodeOk || libCount < 50 || !serverOk) {
+                post { setStatus("Issues found — fixing...") }
+                if (libCount < 50) try {
+                    paths.usrDir.mkdirs()
+                    assets.open("bootstrap/rootfs/rootfs-libs.zip").use { RuntimeFileUtils.unzipStream(it, paths.usrDir) }
+                    val n = paths.usrLibDir.listFiles()?.size ?: 0
+                    post { setDot(libsDot, if (n > 50) GREEN else 0xFFEF4444.toInt())
+                        libsLabel.text = "$n libs (re-extracted)" }
+                } catch (_: Exception) { post { libsLabel.text = "Extraction failed" } }
+            }
+            // 5. HTTP check
+            val httpOk = tryConnect(TAVERN_URL)
+            post {
+                if (httpOk) { setDot(serverDot, GREEN); serverLabel.text = "127.0.0.1:8000 — online" }
+                setStatus(if (httpOk) "All systems ready" else "Check complete — tap ENTER to start")
+                if (httpOk) { serverReady = true; startButton.isEnabled = true; startButton.alpha = 1f }
+                progressBar.progress = 100
+            }
+        }.start()
+    }
+
     private fun enterTavern() {
         if (!serverReady || isWebViewVisible) return
         if (webView.url == null || webView.url.isNullOrBlank()) {
@@ -502,14 +586,14 @@ class MainActivity : Activity() {
     private fun switchToWebView(animate: Boolean) {
         isWebViewVisible = true
         if (animate) {
-            homeScreen.animate().alpha(0f).setDuration(200).withEndAction {
-                homeScreen.visibility = View.GONE
+            homeScroll.animate().alpha(0f).setDuration(200).withEndAction {
+                homeScroll.visibility = View.GONE
                 webViewScreen.visibility = View.VISIBLE
                 webViewScreen.alpha = 0f
                 webViewScreen.animate().alpha(1f).setDuration(220).start()
             }.start()
         } else {
-            homeScreen.visibility = View.GONE
+            homeScroll.visibility = View.GONE
             webViewScreen.visibility = View.VISIBLE
             webViewScreen.alpha = 1f
         }
@@ -520,14 +604,14 @@ class MainActivity : Activity() {
         if (animate) {
             webViewScreen.animate().alpha(0f).setDuration(200).withEndAction {
                 webViewScreen.visibility = View.GONE
-                homeScreen.visibility = View.VISIBLE
-                homeScreen.alpha = 0f
-                homeScreen.animate().alpha(1f).setDuration(220).start()
+                homeScroll.visibility = View.VISIBLE
+                homeScroll.alpha = 0f
+                homeScroll.animate().alpha(1f).setDuration(220).start()
             }.start()
         } else {
             webViewScreen.visibility = View.GONE
-            homeScreen.visibility = View.VISIBLE
-            homeScreen.alpha = 1f
+            homeScroll.visibility = View.VISIBLE
+            homeScroll.alpha = 1f
         }
     }
 
@@ -588,9 +672,9 @@ class MainActivity : Activity() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) { onResult(null); return }
         val loc = IntArray(2)
         webView.getLocationInWindow(loc)
-        // Sample 2px directly below the info bar — the first pixel of WebView content
+        // Sample 1px below WebView top edge — pure WebView content, no mixing
         val sampleX = loc[0] + webView.width / 2
-        val sampleY = loc[1] + statusBarFixedPx + 2
+        val sampleY = loc[1] + 1
         val srcRect = Rect(sampleX, sampleY, sampleX + 1, sampleY + 1)
         val bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
         PixelCopy.request(window, srcRect, bitmap, { result ->
@@ -736,6 +820,18 @@ class MainActivity : Activity() {
         val bootstrapDir = paths.bootstrapDir
         bootstrapDir.mkdirs()
 
+        // Extract Bionic system libraries (libz, libssl, libicu etc.) from APK assets
+        try {
+            paths.usrDir.mkdirs()
+            val assetPath = "bootstrap/rootfs/rootfs-libs.zip"
+            assets.open(assetPath).use { input ->
+                RuntimeFileUtils.unzipStream(input, paths.usrDir)
+            }
+            android.util.Log.i(TAG, "Rootfs extracted to ${paths.usrDir}")
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Rootfs extraction failed", e)
+        }
+
         // Copy native SO files from lib dir to bootstrap for scripts
         val soFiles = listOf(
             "libtarven-sh.so",
@@ -818,10 +914,34 @@ class MainActivity : Activity() {
     }
 
     private fun startServer(paths: RuntimePaths): Boolean {
-        val script = File(paths.scriptsDir, "start-server.sh")
         paths.logsDir.mkdirs()
+        // Ensure local xdg-open from open package is executable
+        val localXdgOpen = File(paths.serverDir, "node_modules/open/xdg-open")
+        if (localXdgOpen.exists()) RuntimeFileUtils.chmodExecutable(localXdgOpen)
+        // Create fake xdg-open that exits cleanly — open npm pkg forces system xdg-open on Android
+        val fakeXdgDir = File(paths.tmpDir, "bin")
+        fakeXdgDir.mkdirs()
+        val fakeXdg = File(fakeXdgDir, "xdg-open")
+        if (!fakeXdg.exists()) {
+            fakeXdg.writeText("#!/system/bin/sh\nexit 0\n")
+            RuntimeFileUtils.chmodExecutable(fakeXdg)
+        }
+        // Patch open package: on Android, use /system/bin/true instead of xdg-open
+        val openIndex = File(paths.serverDir, "node_modules/open/index.js")
+        if (openIndex.exists()) {
+            var patched = openIndex.readText()
+            patched = patched.replace(
+                "platform === 'android' || isBundled || ",
+                "isBundled || ")
+            // Force command = '/system/bin/true' on Android
+            patched = patched.replace(
+                "command = useSystemXdgOpen ? 'xdg-open' : localXdgOpenPath;",
+                "command = '/system/bin/true';")
+            openIndex.writeText(patched)
+        }
         try {
-            val pb = ProcessBuilder("/system/bin/sh", script.absolutePath)
+            // Launch directly: node server.js (skip npm install — node_modules is pre-bundled)
+            val pb = ProcessBuilder(paths.nodeBin.absolutePath, "server.js")
             pb.directory(paths.serverDir)
             pb.redirectErrorStream(true)
             pb.redirectOutput(ProcessBuilder.Redirect.appendTo(File(paths.logsDir, "server.log")))
@@ -833,6 +953,11 @@ class MainActivity : Activity() {
             env["TARVEN_NATIVE_LIB_DIR"] = paths.nativeLibDir.absolutePath
             env["TARVEN_TMP"] = paths.tmpDir.absolutePath
             env["TARVEN_BOOTSTRAP"] = paths.bootstrapDir.absolutePath
+            env["LD_LIBRARY_PATH"] = "${paths.usrDir.absolutePath}/lib:${paths.nativeLibDir.absolutePath}"
+            env["AUTO_LAUNCH"] = "false"
+            env["NO_BROWSER"] = "true"
+            env["BROWSER"] = "/system/bin/true"
+            env["PATH"] = "${paths.tmpDir.absolutePath}/bin:/system/bin:${System.getenv("PATH") ?: ""}"
             env["HOST"] = "127.0.0.1"
             env["PORT"] = "8000"
             pb.start()
@@ -852,7 +977,7 @@ class MainActivity : Activity() {
                 // Fade splash → reveal home with entrance animation
                 post {
                     splash.fadeOut {
-                        homeScreen.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f)
+                        homeScroll.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f)
                             .setDuration(260).setInterpolator(OvershootInterpolator(0.9f)).start()
                     }
                 }
@@ -877,9 +1002,56 @@ class MainActivity : Activity() {
     // HELPERS
     // ============================================
 
+    private fun setDot(dot: View, color: Int) {
+        post { (dot.background as GradientDrawable).setColor(color) }
+    }
+
     private fun setStatus(t: String) { post { statusText.text = t } }
-    private fun setStatusDot(color: Int) {
-        post { (statusDot.background as GradientDrawable).setColor(color) }
+    private fun setStatusDot(color: Int) { setDot(serverDot, color) }
+
+    // ---- Dashboard card builder ----
+    private fun infoCard(
+        title: String, subtitle: String, path: String, dotColor: Int
+    ): Triple<FrameLayout, View, TextView> {
+        val c = card()
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(12), dp(16), dp(12))
+        }
+        // dot + title row
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        val dot = View(this).apply {
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL; setSize(dp(8), dp(8)); setColor(dotColor)
+            }
+            val lp = LinearLayout.LayoutParams(dp(8), dp(8)); lp.rightMargin = dp(8)
+            layoutParams = lp
+        }
+        row.addView(dot)
+        val titleTv = textView(title, dp(13), TEXT, true).apply {
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, WRAP, 1f)
+        }
+        row.addView(titleTv)
+        layout.addView(row)
+        // subtitle
+        val subTv = textView(subtitle, dp(10), TEXT_MUTED, false).apply {
+            gravity = Gravity.START
+            setPadding(dp(16), dp(2), 0, 0)
+        }
+        layout.addView(subTv)
+        // path
+        val pathTv = textView(path, dp(9), TEXT_DIM, false).apply {
+            gravity = Gravity.START
+            setPadding(dp(16), dp(1), 0, 0)
+            maxLines = 1
+        }
+        layout.addView(pathTv)
+        c.addView(layout)
+        return Triple(c, dot, subTv)
     }
     private fun updateProgress(pct: Int) { post { progressBar.progress = pct } }
     private fun post(r: Runnable) { handler.post(r) }
