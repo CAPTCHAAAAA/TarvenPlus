@@ -1,17 +1,26 @@
 package com.tarven.plus.ui
 
+import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
 import android.app.Activity
 import android.graphics.Color
+import android.graphics.PorterDuff
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
+import kotlin.math.sqrt
 
 /**
- * Pure adaptive scrim bar — blends into the WebView via color extraction.
- * No controls, no indicators, no menus. Just the background gradient + breathing gloss.
+ * Unified Chameleon Controller — single-animator state machine for the adaptive scrim bar.
+ *
+ * - One ValueAnimator drives both the scrim background color AND the gloss alpha on a single timeline.
+ * - On rapid re-trigger, reads the current interpolated color as the new start point (seamless interrupt).
+ * - Gloss uses parabolic sin() breathing for natural feel; blend mode SCREEN for ambient glow.
+ * - Color-distance threshold filters out sub-visible noise from scrolling or minor shifts.
  */
 class FloatingControlCenter(private val activity: Activity) {
 
@@ -23,6 +32,12 @@ class FloatingControlCenter(private val activity: Activity) {
     private var root: FrameLayout? = null
     private var barBand = 0
 
+    // Single-animator state
+    private var animator: ValueAnimator? = null
+    private var currentColor = 0xFF181818.toInt()
+    private var targetColor = 0xFF181818.toInt()
+    private val argbEvaluator = ArgbEvaluator()
+
     fun attach(root: FrameLayout, statusBarHeight: Int) {
         this.root = root
         this.barBand = statusBarHeight
@@ -32,20 +47,11 @@ class FloatingControlCenter(private val activity: Activity) {
         root.addView(gloss)
         scrim.alpha = 0f; gloss.alpha = 0f
         scrim.animate().alpha(1f).setDuration(280).start()
-        gloss.animate().alpha(1f).setDuration(280).start()
     }
 
     private fun buildScrim() {
-        val gradient = GradientDrawable(
-            GradientDrawable.Orientation.TOP_BOTTOM,
-            intArrayOf(
-                0xFF2A2A2A.toInt(),
-                0xFF1E1E1E.toInt(),
-                0xFF181818.toInt(),
-            )
-        )
         scrim = View(activity).apply {
-            background = gradient
+            setBackgroundColor(currentColor)
             layoutParams = FrameLayout.LayoutParams(MATCH, barBand).apply {
                 gravity = Gravity.TOP or Gravity.START; topMargin = 0
             }
@@ -55,12 +61,16 @@ class FloatingControlCenter(private val activity: Activity) {
 
     private fun buildGloss() {
         val h = (barBand * 0.3f).toInt()
-        val gradient = GradientDrawable(
-            GradientDrawable.Orientation.TOP_BOTTOM,
-            intArrayOf(0x18FFFFFF.toInt(), 0x00FFFFFF.toInt())
-        )
         gloss = View(activity).apply {
-            background = gradient; alpha = 0f
+            setBackgroundColor(0xFFFFFFFF.toInt())
+            alpha = 0f
+            // SCREEN blend — ambient glow, not white wash
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                backgroundTintBlendMode = android.graphics.BlendMode.SCREEN
+            } else {
+                @Suppress("DEPRECATION")
+                backgroundTintMode = PorterDuff.Mode.SCREEN
+            }
             layoutParams = FrameLayout.LayoutParams(MATCH, h).apply {
                 gravity = Gravity.TOP or Gravity.START; topMargin = 0
             }
@@ -68,57 +78,61 @@ class FloatingControlCenter(private val activity: Activity) {
         }
     }
 
-    fun setScrimColor(baseColor: Int) {
+    /**
+     * Check whether two colors differ enough to warrant a visible animation.
+     * Filters out micro-shifts from scrolling or sub-pixel sampling noise.
+     */
+    fun isSignificantChange(color1: Int, color2: Int): Boolean {
+        val rDiff = Color.red(color1) - Color.red(color2)
+        val gDiff = Color.green(color1) - Color.green(color2)
+        val bDiff = Color.blue(color1) - Color.blue(color2)
+        val distance = sqrt((rDiff * rDiff + gDiff * gDiff + bDiff * bDiff).toDouble())
+        return distance > 15.0
+    }
+
+    fun getCurrentColor() = currentColor
+
+    /**
+     * Seamless-interrupt color transition.
+     * If an animation is mid-flight, the current interpolated frame color
+     * becomes the new starting point — no visual jump, no flash.
+     */
+    fun setScrimColor(newColor: Int) {
         activity.runOnUiThread {
             if (!::scrim.isInitialized) return@runOnUiThread
-            val currentDrawable = scrim.background as? GradientDrawable
-            val currentBody = currentDrawable?.let { d ->
-                val cs = d.colors; if (cs != null && cs.isNotEmpty()) cs.last() else baseColor
-            } ?: baseColor
 
-            val fromR = Color.red(currentBody); val fromG = Color.green(currentBody); val fromB = Color.blue(currentBody)
-            val toR = Color.red(baseColor); val toG = Color.green(baseColor); val toB = Color.blue(baseColor)
+            // No-op if already at target
+            if (newColor == targetColor) return@runOnUiThread
 
-            ValueAnimator.ofFloat(0f, 1f).apply {
-                duration = 2400
-                interpolator = android.view.animation.DecelerateInterpolator(1.8f)
-                addUpdateListener { va ->
-                    val t = va.animatedValue as Float
-                    fun lerp(a: Int, b: Int, f: Float) = (a + (b - a) * f).toInt()
-                    val topMix = if (t < 0.33f) 0f else if (t < 0.66f) (t - 0.33f) / 0.33f else 1f
-                    val midMix = if (t < 0.33f) 0f else if (t < 0.66f) (t - 0.33f) / 0.33f else 1f
-                    val botMix = if (t < 0.33f) t / 0.33f else 1f
-                    scrim.background = GradientDrawable(
-                        GradientDrawable.Orientation.TOP_BOTTOM,
-                        intArrayOf(
-                            Color.rgb(lerp(fromR, toR, topMix), lerp(fromG, toG, topMix), lerp(fromB, toB, topMix)),
-                            Color.rgb(lerp(fromR, toR, midMix), lerp(fromG, toG, midMix), lerp(fromB, toB, midMix)),
-                            Color.rgb(lerp(fromR, toR, botMix), lerp(fromG, toG, botMix), lerp(fromB, toB, botMix))
-                        )
-                    )
+            // Seamless interrupt: use current rendered color as start
+            val startColor = if (animator?.isRunning == true) {
+                animator?.cancel()
+                currentColor
+            } else {
+                currentColor
+            }
+            targetColor = newColor
+
+            animator = ValueAnimator.ofFloat(0f, 1f).apply {
+                duration = 650
+                interpolator = DecelerateInterpolator(1.5f)
+
+                addUpdateListener { anim ->
+                    val fraction = anim.animatedValue as Float
+
+                    // 1. Scrim background — ArgbEvaluator blend
+                    val c = argbEvaluator.evaluate(fraction, startColor, targetColor) as Int
+                    currentColor = c
+                    scrim.setBackgroundColor(c)
+
+                    // 2. Gloss alpha — parabolic sin() 0→peak→0
+                    gloss.alpha = (Math.sin(fraction * Math.PI) * 0.65).toFloat()
                 }
                 start()
             }
         }
     }
 
-    fun sweepGlossOver() {
-        if (!::gloss.isInitialized) return
-        ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 2400
-            interpolator = android.view.animation.DecelerateInterpolator(2f)
-            addUpdateListener { va ->
-                val t = va.animatedFraction
-                gloss.alpha = when {
-                    t < 0.2f -> t / 0.2f * 0.55f
-                    t < 0.7f -> 0.55f
-                    else     -> (1f - t) / 0.3f * 0.55f
-                }
-            }
-            start()
-        }
-    }
-
-    fun show() { activity.runOnUiThread { scrim.animate().alpha(1f).setDuration(200).start(); gloss.animate().alpha(1f).setDuration(200).start() } }
-    fun hide() { activity.runOnUiThread { scrim.animate().alpha(0f).setDuration(180).start(); gloss.animate().alpha(0f).setDuration(180).start() } }
+    fun show() { activity.runOnUiThread { scrim.animate().alpha(1f).setDuration(200).start() } }
+    fun hide() { activity.runOnUiThread { scrim.animate().alpha(0f).setDuration(180).start() } }
 }

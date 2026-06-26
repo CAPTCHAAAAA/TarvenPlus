@@ -652,17 +652,17 @@ class MainActivity : Activity() {
     private fun installChameleonProbes() {
         handler.postDelayed({
             samplePixelColor { hwColor ->
-                if (hwColor != null) floatingControl.setScrimColor(hwColor)
+                if (hwColor != null && floatingControl.isSignificantChange(hwColor, floatingControl.getCurrentColor()))
+                    floatingControl.setScrimColor(hwColor)
             }
-            floatingControl.sweepGlossOver()
         }, 0)
         webView.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_UP) {
                 handler.postDelayed({
                     samplePixelColor { hwColor ->
-                        if (hwColor != null) floatingControl.setScrimColor(hwColor)
+                        if (hwColor != null && floatingControl.isSignificantChange(hwColor, floatingControl.getCurrentColor()))
+                            floatingControl.setScrimColor(hwColor)
                     }
-                    floatingControl.sweepGlossOver()
                 }, 200)
             }
             false
