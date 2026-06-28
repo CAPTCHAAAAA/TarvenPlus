@@ -1,0 +1,832 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* iOS Liquid Glass 设计系统 */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-glass: var(--glass);
+  --color-glass-border: var(--glass-border);
+}
+
+/* 浅色模式 - iOS 黑白灰绿 */
+:root {
+  --radius: 1.5rem;
+
+  /* 基础色彩 */
+  --background: #e5e7eb;
+  --foreground: oklch(0.12 0 0);
+  --card: oklch(1 0 0 / 0.15);
+  --card-foreground: oklch(0.12 0 0);
+  --popover: oklch(1 0 0 / 0.2);
+  --popover-foreground: oklch(0.12 0 0);
+
+  /* 品牌色 - iOS 绿 */
+  --primary: oklch(0.72 0.18 150);
+  --primary-foreground: oklch(0.12 0 0);
+
+  /* 次要色 */
+  --secondary: oklch(0.85 0.01 260 / 0.5);
+  --secondary-foreground: oklch(0.12 0 0);
+
+  /* 静音/弱化 */
+  --muted: oklch(0.85 0.005 260 / 0.4);
+  --muted-foreground: oklch(0.45 0 0);
+
+  /* 强调色 */
+  --accent: oklch(0.72 0.18 150 / 0.15);
+  --accent-foreground: oklch(0.12 0 0);
+
+  /* 状态色 */
+  --destructive: oklch(0.55 0.18 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  /* 边框和玻璃 */
+  --border: oklch(0 0 0 / 0.08);
+  --input: oklch(0 0 0 / 0.06);
+  --ring: oklch(0.72 0.18 150);
+  --glass: oklch(1 0 0 / 0.15);
+  --glass-border: oklch(0 0 0 / 0.06);
+
+  /* 动效 */
+  --transition-fast: 180ms ease;
+  --transition-normal: 300ms ease;
+  --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* 丝绸玫红 - 仅用于品牌标识 */
+  --brand-rose: oklch(0.65 0.18 15);
+  --brand-rose-light: oklch(0.70 0.16 15);
+}
+
+/* 深色模式 - iOS 黑白灰绿 */
+.dark {
+  --background: oklch(0.12 0.005 260);
+  --foreground: oklch(0.92 0 0);
+  --card: oklch(0.18 0.005 260 / 0.3);
+  --card-foreground: oklch(0.92 0 0);
+  --popover: oklch(0.22 0.005 260 / 0.4);
+  --popover-foreground: oklch(0.92 0 0);
+
+  --primary: oklch(0.72 0.18 150);
+  --primary-foreground: oklch(0.12 0 0);
+
+  --secondary: oklch(0.25 0.01 260 / 0.5);
+  --secondary-foreground: oklch(0.92 0 0);
+
+  --muted: oklch(0.25 0.005 260 / 0.4);
+  --muted-foreground: oklch(0.60 0 0);
+
+  --accent: oklch(0.72 0.18 150 / 0.2);
+  --accent-foreground: oklch(0.92 0 0);
+
+  --destructive: oklch(0.55 0.18 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: oklch(1 0 0 / 0.08);
+  --input: oklch(1 0 0 / 0.06);
+  --ring: oklch(0.72 0.18 150);
+  --glass: oklch(0.18 0.005 260 / 0.3);
+  --glass-border: oklch(1 0 0 / 0.08);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: -apple-system, BlinkMacSystemFont, 'Nunito', 'SF Pro Display', 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* 圆角字体 */
+  .font-rounded {
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 500;
+  }
+
+  /* 日志等宽字体 */
+  .font-log-mono {
+    font-family: 'SF Mono', 'Menlo', 'Consolas', 'Monaco', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  /* 滚动条 - Liquid Glass 风格 */
+  ::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.5 0 0 / 0.3);
+    border-radius: 1.5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.6 0 0 / 0.4);
+  }
+}
+
+/* 玻璃面板 - Liquid Glass */
+.glass-panel {
+  background: var(--glass);
+  backdrop-filter: blur(40px) saturate(1.8);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8);
+  border: 0.5px solid var(--glass-border);
+  border-radius: var(--radius-3xl);
+  box-shadow:
+    0 8px 32px oklch(0 0 0 / 0.08),
+    inset 0 1px 0 oklch(1 0 0 / 0.60),
+    inset 0 -1px 0 oklch(0 0 0 / 0.04),
+    inset 0 2px 12px oklch(0 0 0 / 0.03);
+}
+
+.dark .glass-panel {
+  box-shadow:
+    0 8px 32px oklch(0 0 0 / 0.2),
+    inset 0 1px 0 oklch(1 0 0 / 0.15),
+    inset 0 -1px 0 oklch(0 0 0 / 0.1),
+    inset 0 2px 12px oklch(0 0 0 / 0.08);
+}
+
+/* 胶囊按钮 */
+.capsule-btn {
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.30), oklch(1 0 0 / 0.20));
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 0.5px solid var(--glass-border);
+  border-radius: 9999px;
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.50),
+    inset 0 -1px 0 oklch(0 0 0 / 0.04),
+    0 2px 6px oklch(0 0 0 / 0.06);
+  transition: all var(--transition-spring);
+}
+
+.capsule-btn:hover {
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.40), oklch(1 0 0 / 0.30));
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.60),
+    inset 0 -1px 0 oklch(0 0 0 / 0.04),
+    0 4px 12px oklch(0 0 0 / 0.08);
+}
+
+.capsule-btn:active {
+  transform: scale(0.96);
+}
+
+.dark .capsule-btn {
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.15), oklch(1 0 0 / 0.08));
+}
+
+.dark .capsule-btn:hover {
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.20), oklch(1 0 0 / 0.12));
+}
+
+/* 主要胶囊按钮（iOS 绿） */
+.capsule-btn-primary {
+  background: linear-gradient(180deg, var(--primary), oklch(0.65 0.16 150));
+  border: 0.5px solid oklch(0.6 0.15 150 / 0.3);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.30),
+    inset 0 -1px 0 oklch(0 0 0 / 0.10),
+    0 2px 8px oklch(0.72 0.18 150 / 0.25);
+}
+
+.capsule-btn-primary:hover {
+  background: linear-gradient(180deg, oklch(0.75 0.19 150), oklch(0.68 0.17 150));
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.40),
+    inset 0 -1px 0 oklch(0 0 0 / 0.10),
+    0 4px 12px oklch(0.72 0.18 150 / 0.35);
+}
+
+/* 玻璃内凹区域（日志等） */
+.glass-inner {
+  background: linear-gradient(180deg, oklch(0.22 0.005 260), oklch(0.19 0.005 260));
+  border: 1px solid oklch(0 0 0 / 0.10);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    inset 0 1px 4px oklch(0 0 0 / 0.15),
+    inset 0 1px 0 oklch(1 0 0 / 0.04);
+}
+
+.dark .glass-inner {
+  background: linear-gradient(180deg, oklch(0.20 0.005 260), oklch(0.17 0.005 260));
+}
+
+/* 滑块 */
+.slider-track {
+  background: oklch(0.85 0.01 260 / 0.5);
+  border-radius: 9999px;
+  height: 4px;
+}
+
+.slider-fill {
+  background: var(--primary);
+  border-radius: 9999px;
+  opacity: 0.7;
+}
+
+.slider-thumb {
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.95), oklch(1 0 0 / 0.85));
+  border-radius: 50%;
+  box-shadow:
+    0 1px 3px oklch(0 0 0 / 0.12),
+    0 1px 1px oklch(0 0 0 / 0.08);
+  transition: transform 150ms ease;
+}
+
+.slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.slider-thumb:active {
+  transform: scale(0.95);
+}
+
+/* 动画关键帧 */
+@keyframes ambient-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(10px, -15px) scale(1.02);
+  }
+  50% {
+    transform: translate(-5px, 10px) scale(0.98);
+  }
+  75% {
+    transform: translate(-15px, -5px) scale(1.01);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.8;
+    filter: blur(40px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(50px);
+  }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 工具类 */
+.animate-ambient {
+  animation: ambient-float 25s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up var(--transition-spring);
+}
+
+.animate-fade-in {
+  animation: fade-in var(--transition-fast);
+}
+
+/* 隐藏滚动条但保持滚动 */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* 等宽数字 */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 翻转动画 */
+.flip-container {
+  perspective: 1000px;
+}
+
+.flip-card {
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flip-card.flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
+/* 拨杆开关 */
+.lever-switch {
+  position: relative;
+  width: 56px;
+  height: 28px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, oklch(0.85 0.01 260 / 0.6), oklch(0.8 0.01 260 / 0.4));
+  border: 0.5px solid var(--glass-border);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  overflow: hidden;
+}
+
+.dark .lever-switch {
+  background: linear-gradient(180deg, oklch(0.25 0.01 260 / 0.6), oklch(0.2 0.01 260 / 0.4));
+}
+
+.lever-switch.active {
+  background: linear-gradient(180deg, oklch(0.72 0.18 150 / 0.3), oklch(0.65 0.16 150 / 0.2));
+}
+
+.lever-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.95), oklch(1 0 0 / 0.85));
+  box-shadow:
+    0 1px 3px oklch(0 0 0 / 0.15),
+    0 1px 1px oklch(0 0 0 / 0.1),
+    inset 0 1px 0 oklch(1 0 0 / 0.5);
+  transition: transform var(--transition-spring);
+}
+
+.lever-switch.active .lever-knob {
+  transform: translateX(28px);
+}
+
+/* 提示对话框 */
+.theme-hint-bubble {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  padding: 12px 16px;
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 0.5px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 8px 24px oklch(0 0 0 / 0.12),
+    inset 0 1px 0 oklch(1 0 0 / 0.5);
+  animation: hint-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 100;
+  min-width: 180px;
+}
+
+@keyframes hint-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.theme-hint-bubble::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--glass);
+  border: 0.5px solid var(--glass-border);
+  border-top: none;
+  border-right: none;
+  transform: rotate(45deg);
+}
+
+/* 品牌色工具类 - 丝绸玫红 */
+.text-brand-rose {
+  color: var(--brand-rose);
+}
+
+.bg-brand-rose {
+  background-color: var(--brand-rose);
+}
+
+.from-brand-rose {
+  --tw-gradient-from: var(--brand-rose);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.to-brand-rose-light {
+  --tw-gradient-to: var(--brand-rose-light);
+}
+
+/* 深酒红屏保流光 - 基于 #6a112e 色系 */
+/* 色板: #6a112e(主), #8b1a3a(亮), #4d0c22(暗), #a32848(高光), #3d0a1b(深底) */
+.ambient-glow {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(80px);
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+/* 流光 1 - 左上区域大光斑 */
+.ambient-glow-1 {
+  top: -15%;
+  left: -15%;
+  width: 65vw;
+  height: 65vh;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(106, 17, 46, 0.45) 0%,
+    rgba(139, 26, 58, 0.3) 30%,
+    rgba(106, 17, 46, 0.15) 55%,
+    transparent 75%
+  );
+  animation: screensaver-drift-1 28s ease-in-out infinite;
+}
+
+/* 流光 2 - 右下区域大光斑 */
+.ambient-glow-2 {
+  bottom: -15%;
+  right: -15%;
+  width: 70vw;
+  height: 70vh;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(163, 40, 72, 0.35) 0%,
+    rgba(106, 17, 46, 0.25) 30%,
+    rgba(77, 12, 34, 0.12) 55%,
+    transparent 75%
+  );
+  animation: screensaver-drift-2 32s ease-in-out infinite;
+}
+
+/* 流光 3 - 中心偏上横向光带 */
+.ambient-glow-3 {
+  top: 15%;
+  left: 10%;
+  width: 80vw;
+  height: 40vh;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(139, 26, 58, 0.3) 0%,
+    rgba(106, 17, 46, 0.2) 35%,
+    rgba(61, 10, 27, 0.1) 60%,
+    transparent 80%
+  );
+  animation: screensaver-drift-3 24s ease-in-out infinite;
+}
+
+/* 流光 4 - 左侧纵向光带 */
+.ambient-glow-4 {
+  top: 10%;
+  left: -5%;
+  width: 45vw;
+  height: 80vh;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(77, 12, 34, 0.4) 0%,
+    rgba(106, 17, 46, 0.25) 30%,
+    rgba(139, 26, 58, 0.12) 55%,
+    transparent 75%
+  );
+  animation: screensaver-drift-4 30s ease-in-out infinite;
+}
+
+/* 流光 5 - 右上方补充光斑 */
+.ambient-glow-5 {
+  top: -10%;
+  right: 5%;
+  width: 55vw;
+  height: 55vh;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(163, 40, 72, 0.28) 0%,
+    rgba(106, 17, 46, 0.18) 35%,
+    rgba(77, 12, 34, 0.08) 60%,
+    transparent 80%
+  );
+  animation: screensaver-drift-5 26s ease-in-out infinite;
+}
+
+/* 纯流动动画 - 大幅位移覆盖全屏 */
+@keyframes screensaver-drift-1 {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(25vw, 18vh); }
+  50%  { transform: translate(10vw, 35vh); }
+  75%  { transform: translate(-15vw, 20vh); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes screensaver-drift-2 {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-22vw, -15vh); }
+  50%  { transform: translate(-35vw, -28vh); }
+  75%  { transform: translate(-15vw, -30vh); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes screensaver-drift-3 {
+  0%   { transform: translate(0, 0); }
+  33%  { transform: translate(-20vw, 25vh); }
+  66%  { transform: translate(22vw, -12vh); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes screensaver-drift-4 {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(20vw, -22vh); }
+  50%  { transform: translate(30vw, 10vh); }
+  75%  { transform: translate(10vw, 28vh); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes screensaver-drift-5 {
+  0%   { transform: translate(0, 0); }
+  33%  { transform: translate(-25vw, 22vh); }
+  66%  { transform: translate(15vw, 30vh); }
+  100% { transform: translate(0, 0); }
+}
+
+/* 柔和液态玻璃卡片 */
+.comfy-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 15px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.25s ease;
+}
+
+.comfy-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+}
+
+.comfy-card:active {
+  transform: translateY(0);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* 红绿灯按钮 */
+.traffic-light-btn {
+  padding: 4px 8px;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.traffic-light-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.traffic-light-btn:active {
+  transform: scale(0.95);
+}
+
+/* 背景设置面板弹出动画 */
+@keyframes panel-pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.9);
+    filter: blur(6px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.02);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes panel-pop-out {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.92);
+    filter: blur(4px);
+  }
+}
+
+.bg-panel-enter {
+  animation: panel-pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transform-origin: top left;
+}
+
+.bg-panel-exit {
+  animation: panel-pop-out 0.25s ease forwards;
+  transform-origin: top left;
+  pointer-events: none;
+}
+
+/* 动态背景暂停控制 */
+.ambient-glow-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ambient-paused .ambient-glow {
+  animation-play-state: paused !important;
+}
+
+/* iOS 拨杆开关 - 动态壁纸控制 */
+.ios-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ios-toggle-track {
+  position: relative;
+  width: 51px;
+  height: 31px;
+  border-radius: 16px;
+  background: rgba(120, 120, 128, 0.16);
+  border: 0.5px solid rgba(0, 0, 0, 0.04);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+.ios-toggle-track-active {
+  background: #34c759;
+  border-color: transparent;
+  box-shadow: 0 0 12px rgba(52, 199, 89, 0.4), 0 0 4px rgba(52, 199, 89, 0.2);
+}
+
+.ios-toggle-icons {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 7px;
+  font-size: 10px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ios-toggle-icon-off {
+  color: rgba(0, 0, 0, 0.2);
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.ios-toggle-icon-on {
+  color: rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.ios-toggle-track-active .ios-toggle-icon-off {
+  opacity: 0;
+}
+
+.ios-toggle-track-active .ios-toggle-icon-on {
+  opacity: 1;
+}
+
+.ios-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: white;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 3px 8px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+}
+
+.ios-toggle-thumb-active {
+  transform: translateX(20px);
+}
+
+/* 壁纸背景 - CSS 渐变模拟 */
+.wallpaper-bg {
+  transition: background 0.5s ease;
+}
+
+.wallpaper-bg[data-wallpaper="wine-flow"] {
+  background: linear-gradient(135deg, #1a0a10 0%, #3d0a1b 25%, #6a112e 50%, #4d0c22 75%, #1a0a10 100%);
+}
+
+.wallpaper-bg[data-wallpaper="aurora"] {
+  background: linear-gradient(160deg, #0a1628 0%, #0d2847 20%, #1a4a5e 40%, #2d6b5a 60%, #0d3b4f 80%, #0a1628 100%);
+}
+
+.wallpaper-bg[data-wallpaper="nebula"] {
+  background: linear-gradient(145deg, #0f0a1e 0%, #1e1040 25%, #2d1b69 50%, #1a0e3d 75%, #0f0a1e 100%);
+}
+
+.wallpaper-bg[data-wallpaper="ocean"] {
+  background: linear-gradient(170deg, #050d1a 0%, #0a1e3d 25%, #0f2d5e 50%, #0a2248 75%, #050d1a 100%);
+}

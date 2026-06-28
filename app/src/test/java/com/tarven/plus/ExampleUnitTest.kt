@@ -1,4 +1,4 @@
-package com.tarven.plus
+package com.sillyclient
 
 import org.junit.Test
 

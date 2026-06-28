@@ -1,6 +1,8 @@
 *.iml
 .gradle
+.kotlin
 /local.properties
+local.properties
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
@@ -9,7 +11,20 @@
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
+/build/
+/app/build/
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+
+# web 模块产物与依赖（仅源码入库，dist 由 vite 重新生成）
+node_modules/
+web/*/dist/
+web/*/.vite-temp/
+web/*/.microcompact/
+web/*/.todo/
+web/*/.plan/
+
+# 游离截图（根目录）
+/*.png
+

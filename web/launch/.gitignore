@@ -1,0 +1,112 @@
+# 通用
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.orig
+
+# 环境变量与密钥
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器与 IDE
+.idea/
+.vscode/
+
+# Node.js / JavaScript / TypeScript
+node_modules/
+dist/
+build/
+.next/
+.nuxt/
+.cache/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+ENV/
+pip-wheel-metadata/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Java / Kotlin
+target/
+*.class
+*.jar
+*.war
+*.ear
+.gradle/
+out/
+
+# Go
+bin/
+*.test
+coverage.out
+
+# C / C++
+*.o
+*.obj
+*.so
+*.a
+*.lib
+*.dll
+*.dylib
+*.exe
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+compile_commands.json
+Makefile
+
+# Rust
+target/
+
+# C#
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+bin/
+obj/
+
+# Ruby & PHP / Composer：`/vendor/` 仅忽略仓库根目录下的 vendor（不包含 src/pages/vendor/ 等）
+.bundle/
+/vendor/
+
+# OneDay 中间产物目录（文件处理时的临时文件，不需要持久化）
+tmp/
+
+# other
+.meoo
+.stats
+.config
+.accesslog
+
+# 沙箱崩溃， 产生的文件
+/core
+/.core.hmbtNy
+/.core.dump
